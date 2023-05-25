@@ -75,17 +75,20 @@ class TaskGraph:
         path, distance = self._shortest_path(self.adj_matrix, start_node, goal_node)
         return path, distance
 
-    def traverse_constant_procrastination(self, bias: float, start_node : str, goal_node : str):
+    def traverse_procrastination(self, start_node : str, goal_node : str, bias_type: str, bias: float=None):
         curr_node = start_node
 
         total_distance = 0
         final_path = []
         final_path.append(curr_node)
-
+        
         while curr_node != goal_node:
             
             adj_matrix = deepcopy(self.adj_matrix)
             curr = self._node_to_index(curr_node)
+            
+            if bias_type == "variable":
+                bias = self._calc_variable_bias()
             self._scale_adj_matrix(adj_matrix, curr, bias)
             path, _ = self._shortest_path(adj_matrix, curr_node, goal_node)
             del adj_matrix
@@ -116,13 +119,17 @@ class TaskGraph:
 
 
 if __name__ == "__main__":
+    random.seed(42)
+
     nodes = ["a", "b", "c", "d", "e", "f", "g"]
     edges = [("a", "f", 16), ("a", "c", 8), ("f", "b", 2), ("c", "d", 8), ("d", "g", 8), ("c", "e", 2), ("e", "g", 16), ("b", "g", 2)]
 
     tg = TaskGraph(nodes, edges, "constant")
 
-    #tg._shortest_path(tg.adj_matrix, "a", "g")
+    #path, distance = tg._shortest_path(tg.adj_matrix, "a", "g")
 
     constant_bias = 1/0.5 #Beta is 0.5 and b is inverse of Beta
 
-    tg.traverse_constant_procrastination(constant_bias, "a", "g")
+    #path, distance = tg.traverse_procrastination("a", "g", "constant", constant_bias)
+
+    path, distance = tg.traverse_procrastination("a", "g", "variable")
