@@ -19,6 +19,7 @@ class TaskGraph:
     #dijkstra's
     def _shortest_path(self, adj_matrix : list, start_node : str, goal_node : str):
         start = self._node_to_index(start_node)
+        goal = self._node_to_index(goal_node)
         unvisited = [i for i in range(len(self.nodes))]
         visited = []
         shortest_distance = [math.inf for i in self.nodes]
@@ -35,7 +36,7 @@ class TaskGraph:
                         previous_vertex[i] = start
             visited.append(start)
             unvisited.remove(start)
-            if len(unvisited) == 0:
+            if start == goal or len(unvisited) == 0:
                 break
             min = math.inf
             node = None
@@ -47,7 +48,7 @@ class TaskGraph:
 
         start = self._node_to_index(start_node)
         
-        curr = self._node_to_index(goal_node)
+        curr = goal
         total_distance = 0
         path = []
         path.append(self.nodes[curr])
@@ -65,7 +66,7 @@ class TaskGraph:
 
     #present, variable bias
     def _calc_variable_bias(self):
-        return random.uniform(0, 1)
+        return 1/random.uniform(0, 1)
 
     def delete_edges(self):
         pass
@@ -74,8 +75,44 @@ class TaskGraph:
         path, distance = self._shortest_path(self.adj_matrix, start_node, goal_node)
         return path, distance
 
-    def traverse_procrastination(self, start : str, goal : str):
-        pass
+    def traverse_constant_procrastination(self, bias: float, start_node : str, goal_node : str):
+        curr_node = start_node
+
+        total_distance = 0
+        final_path = []
+        final_path.append(curr_node)
+
+        while curr_node != goal_node:
+            
+            adj_matrix = deepcopy(self.adj_matrix)
+            curr = self._node_to_index(curr_node)
+            self._scale_adj_matrix(adj_matrix, curr, bias)
+            path, _ = self._shortest_path(adj_matrix, curr_node, goal_node)
+            del adj_matrix
+            next_node = path[1]
+            next = self._node_to_index(next_node)
+            total_distance += self.adj_matrix[curr][next]
+            curr_node = next_node
+            final_path.append(curr_node)
+
+        return final_path, total_distance
+        
+            
+
+    def _scale_adj_matrix(self, adj_matrix, curr, bias):
+        adjacent = adj_matrix[curr]
+        scaled_adj = []
+        for edge_weight in adjacent:
+            if edge_weight != math.inf:
+                new_weight = edge_weight * bias
+                scaled_adj.append(new_weight)
+            else:
+                scaled_adj.append(edge_weight)
+        adj_matrix[curr] = scaled_adj
+        
+    
+
+
 
 
 if __name__ == "__main__":
@@ -84,5 +121,8 @@ if __name__ == "__main__":
 
     tg = TaskGraph(nodes, edges, "constant")
 
-    tg._shortest_path(tg.adj_matrix, "a", "g")
-    pass
+    #tg._shortest_path(tg.adj_matrix, "a", "g")
+
+    constant_bias = 1/0.5 #Beta is 0.5 and b is inverse of Beta
+
+    tg.traverse_constant_procrastination(constant_bias, "a", "g")
