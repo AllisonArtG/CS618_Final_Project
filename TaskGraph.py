@@ -4,13 +4,12 @@ from copy import deepcopy
 
 class TaskGraph:
 
-    def __init__(self, nodes : list[str], edges : list[tuple], bias : str):
+    def __init__(self, nodes : list[str], edges : list[tuple]):
         self.nodes = nodes
         self.num_nodes = len(nodes)
         self.node_to_index = {}
         for i in range(len(self.nodes)):
             self.node_to_index[self.nodes[i]] = i
-        self.bias = bias
         
         self.adj_matrix = [[math.inf for i in range(self.num_nodes)] for j in range(self.num_nodes)]
         for start_node, end_node, edge_weight in edges:
