@@ -75,10 +75,11 @@ class TaskGraph:
         path, distance = self._shortest_path(self.adj_matrix, start_node, goal_node)
         return path, distance
 
-    def traverse_procrastination(self, start_node : str, goal_node : str, bias_type: str, bias: float=None):
+    def traverse_procrastination(self, start_node : str, goal_node : str, bias_type: str, bias: float=None, reward: float=None):
         curr_node = start_node
 
         total_distance = 0
+        total_prec_distance = 0
         final_path = []
         final_path.append(curr_node)
         
@@ -90,16 +91,20 @@ class TaskGraph:
             if bias_type == "variable":
                 bias = self._calc_variable_bias()
             self._scale_adj_matrix(adj_matrix, curr, bias)
-            path, _ = self._shortest_path(adj_matrix, curr_node, goal_node)
-            del adj_matrix
+            path, preceived_distance = self._shortest_path(adj_matrix, curr_node, goal_node)
             next_node = path[1]
             next = self._node_to_index(next_node)
-            total_distance += self.adj_matrix[curr][next]
+            distance = self.adj_matrix[curr][next]
+            prec_distance = adj_matrix[curr][next]
+            del adj_matrix
+            if reward is not None and total_prec_distance + preceived_distance > reward: # abandonment
+                break
+            total_distance += distance
+            total_prec_distance += prec_distance
             curr_node = next_node
             final_path.append(curr_node)
 
         return final_path, total_distance
-        
             
 
     def _scale_adj_matrix(self, adj_matrix, curr, bias):
@@ -132,4 +137,7 @@ if __name__ == "__main__":
 
     #path, distance = tg.traverse_procrastination("a", "g", "constant", constant_bias)
 
-    path, distance = tg.traverse_procrastination("a", "g", "variable")
+    # demostrates abandonment at node c
+    path, distance = tg.traverse_procrastination("a", "g", "constant", constant_bias, 35)
+
+    #path, distance = tg.traverse_procrastination("a", "g", "variable")
