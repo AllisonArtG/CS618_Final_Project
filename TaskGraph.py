@@ -1,5 +1,6 @@
 import random
 import math
+import sys
 from copy import deepcopy
 
 class TaskGraph:
@@ -47,6 +48,7 @@ class TaskGraph:
 
         start = self._node_to_index(start_node)
         
+        # backtracking to get path and total_distance
         curr = goal
         total_distance = 0
         path = []
@@ -58,14 +60,13 @@ class TaskGraph:
             curr = prev
         return path, total_distance
             
-
-
     def _node_to_index(self, node):
         return self.node_to_index[node]
 
     #present, variable bias
     def _calc_variable_bias(self):
-        return 1/random.uniform(0, 1)
+        # bias is drawn iid from [1, inf) (2016, p. 5)
+        return random.uniform(0, sys.maxsize)
 
     def delete_edges(self):
         pass
@@ -73,12 +74,11 @@ class TaskGraph:
     def traverse_optimal(self, start_node : str, goal_node : str):
         path, distance = self._shortest_path(self.adj_matrix, start_node, goal_node)
         return path, distance
-
-    def traverse_procrastination(self, start_node : str, goal_node : str, bias_type: str, bias: float=None, reward: float=None):
+    
+    def traverse_variable_procrastination(self, start_node : str, goal_node : str):
         curr_node = start_node
 
         total_distance = 0
-        total_prec_distance = 0
         final_path = []
         final_path.append(curr_node)
         
@@ -87,33 +87,58 @@ class TaskGraph:
             adj_matrix = deepcopy(self.adj_matrix)
             curr = self._node_to_index(curr_node)
             
-            if bias_type == "variable":
-                bias = self._calc_variable_bias()
-            self._scale_adj_matrix(adj_matrix, curr, bias)
-            path, preceived_distance = self._shortest_path(adj_matrix, curr_node, goal_node)
+            bias = self._calc_variable_bias()
+            self._scale_adj_matrix_variable(adj_matrix, curr, bias)
+            path, _ = self._shortest_path(adj_matrix, curr_node, goal_node)
             next_node = path[1]
             next = self._node_to_index(next_node)
             distance = self.adj_matrix[curr][next]
-            prec_distance = adj_matrix[curr][next]
             del adj_matrix
-            if reward is not None and total_prec_distance + preceived_distance > reward: # abandonment
-                break
             total_distance += distance
-            total_prec_distance += prec_distance
             curr_node = next_node
             final_path.append(curr_node)
 
         return final_path, total_distance
+
+    def traverse_constant_procrastination(self, start_node : str, goal_node : str, bias: float=None, reward: float=None):
+        curr_node = start_node
+        try:
+            scaled_reward = bias * reward # reward is always perceived as scaled (2016, page. 6)
+        except Exception as e:
+            pass
+
+        total_distance = 0
+        final_path = []
+        final_path.append(curr_node)
+        
+        while curr_node != goal_node:
+            
+            adj_matrix = deepcopy(self.adj_matrix)
+            curr = self._node_to_index(curr_node)
+            
+            self._scale_adj_matrix_constant(adj_matrix, curr, bias)
+            path, preceived_distance = self._shortest_path(adj_matrix, curr_node, goal_node)
+            next_node = path[1]
+            next = self._node_to_index(next_node)
+            distance = self.adj_matrix[curr][next]
+            del adj_matrix
+
+            # please double check the preceived_distance > scaled_reward, as I thought it included what had been previously travelled but that returns the wrong behavior for the projects example problem 
+            if reward is not None and preceived_distance > scaled_reward: # abandonment
+                break
+            total_distance += distance
+            curr_node = next_node
+            final_path.append(curr_node)
+
+        return final_path, total_distance
+    
+    def _scale_adj_matrix_constant(self, adj_matrix, curr, bias):
+        for i in range(len(adj_matrix)):
+            if i != curr:
+                adj_matrix[i] = [x * bias for x in adj_matrix[i]]
             
 
-    def _scale_adj_matrix(self, adj_matrix, curr, bias):
-        adjacent = adj_matrix[curr]
-        scaled_adj = []
-        for edge_weight in adjacent:
-            if edge_weight != math.inf:
-                new_weight = edge_weight * bias
-                scaled_adj.append(new_weight)
-            else:
-                scaled_adj.append(edge_weight)
-        adj_matrix[curr] = scaled_adj
+    def _scale_adj_matrix_variable(self, adj_matrix, curr, bias):
+        # scales weights so b * immediate edges, leaving remaining unchanged (2016, p. 5)
+        adj_matrix[curr] = [x * bias for x in adj_matrix[curr]]
         

@@ -10,34 +10,37 @@ def main():
 
     tg = TaskGraph(nodes, edges)
 
-    # print("Optimal Shortest Path")
-    # path, distance = tg._shortest_path(tg.adj_matrix, "a", "g")
-    # print("path:", path)
-    # print("distance", distance, "\n")
+    print("\nSimple Graph Example\n")
 
-    constant_bias = 1/0.5 #Beta is 0.5 and b is inverse of Beta
+    print("Optimal Shortest Path")
+    path, distance = tg._shortest_path(tg.adj_matrix, "a", "g")
+    print("path:", path)
+    print("distance", distance, "\n")
 
-    # print("Constant Bias Procrastination")
-    # print("bias:", constant_bias)
-    # path, distance = tg.traverse_procrastination("a", "g", "constant", constant_bias)
-    # print("path:", path)
-    # print("distance", distance, "\n")
+    constant_bias = 0.5 # referred to as Beta in 2014 paper
 
-    # print("Constant Bias Procrastination w/ End Reward")
-    # print("Demostrates Task Abandonment")
-    # print("bias:", constant_bias)
-    # reward = 35
-    # print("end reward:", reward)
-    # path, distance = tg.traverse_procrastination("a", "g", "constant", constant_bias, reward)
-    # print("path:", path)
-    # print("distance", distance, "\n")
+    print("Constant Bias Procrastination")
+    print("bias:", constant_bias)
+    path, distance = tg.traverse_constant_procrastination("a", "g", constant_bias)
+    print("path:", path)
+    print("distance", distance, "\n")
 
-    # print("Variable Bias Procrastination")
-    # path, distance = tg.traverse_procrastination("a", "g", "variable")
-    # print("path:", path)
-    # print("distance", distance, "\n")
+    print("Constant Bias Procrastination w/ End Reward")
+    print("Demostrates Task Abandonment")
+    print("bias:", constant_bias)
+    reward = 31
+    print("end reward:", reward)
+    path, distance = tg.traverse_constant_procrastination("a", "g", constant_bias, reward)
+    print("path:", path)
+    print("distance", distance, "\n")
 
-    # student project example
+    print("Variable Bias Procrastination")
+    path, distance = tg.traverse_variable_procrastination("a", "g")
+    print("path:", path)
+    print("distance", distance, "\n")
+
+    print("Course (and Two Projects) Example\n")
+
     nodes = ["s", "v_10", "v_20", "v_30", "v_11", "v_21", "v_31", "v_12", "v_22", "g"]
     edges = [("s", "v_10", 1), ("v_10", "v_20", 1), ("v_20", "v_30", 1), 
               ("v_11", "v_21", 1), ("v_21", "v_31", 1), 
@@ -56,8 +59,8 @@ def main():
     # print("Constant Bias Procrastination w/ End Reward")
     # print("Demostrates Task Abandonment")
     # print("bias:", constant_bias)
-    # print("rewards:", rewards)
-    path, distance = tg_student_ex.traverse_procrastination("s", "g", "constant", constant_bias, reward[0][1])
+    # print("reward:", reward)
+    path, distance = tg_student_ex.traverse_constant_procrastination("s", "g", constant_bias, reward[0][1])
     print("path:", path)
     print("distance", distance, "\n")
 
@@ -69,7 +72,7 @@ def main():
     edges.remove(("v_20", "g", 9))
 
     tg_student_ex_trimmed = TaskGraph(nodes, edges)
-    path, distance = tg_student_ex_trimmed.traverse_procrastination("s", "g", "constant", constant_bias, reward[0][1])
+    path, distance = tg_student_ex_trimmed.traverse_constant_procrastination("s", "g", constant_bias, reward[0][1])
     print("path:", path)
     print("distance", distance, "\n")
 
