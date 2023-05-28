@@ -5,7 +5,7 @@ from copy import deepcopy
 
 class TaskGraph:
 
-    def __init__(self, nodes : list[str], edges : list[tuple]):
+    def __init__(self, nodes , edges ):
         self.nodes = nodes
         self.num_nodes = len(nodes)
         self.node_to_index = {}
@@ -15,6 +15,8 @@ class TaskGraph:
         self.adj_matrix = [[math.inf for i in range(self.num_nodes)] for j in range(self.num_nodes)]
         for start_node, end_node, edge_weight in edges:
             self.adj_matrix[self._node_to_index(start_node)][self._node_to_index(end_node)] = edge_weight
+        
+        self.edges = edges
 
     #dijkstra's
     def _shortest_path(self, adj_matrix : list, start_node : str, goal_node : str):
@@ -141,4 +143,37 @@ class TaskGraph:
     def _scale_adj_matrix_variable(self, adj_matrix, curr, bias):
         # scales weights so b * immediate edges, leaving remaining unchanged (2016, p. 5)
         adj_matrix[curr] = [x * bias for x in adj_matrix[curr]]
+
+    
+    def _plot_graph(self):
+        import networkx as nx
+        import matplotlib.pyplot as plt
+
+        G = nx.Graph()
+
+        for edge in self.edges:
+            G.add_edge(edge[0],edge[1],weight=edge[2])
+        
+        elarge = [(u, v) for (u, v, d) in G.edges(data=True)]
+
+        pos = nx.spring_layout(G, seed=7)  # positions for all nodes - seed for reproducibility
+
+        # nodes
+        nx.draw_networkx_nodes(G, pos, node_size=700)
+
+        # edges
+        nx.draw_networkx_edges(G, pos, edgelist=elarge, width=3)
+        
+
+        # node labels
+        nx.draw_networkx_labels(G, pos, font_size=20, font_family="sans-serif")
+        # edge weight labels
+        edge_labels = nx.get_edge_attributes(G, "weight")
+        nx.draw_networkx_edge_labels(G, pos, edge_labels)
+
+        ax = plt.gca()
+        ax.margins(0.08)
+        plt.axis("off")
+        plt.tight_layout()
+        plt.show()
         

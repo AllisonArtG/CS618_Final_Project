@@ -10,6 +10,8 @@ def main():
 
     tg = TaskGraph(nodes, edges)
 
+    tg._plot_graph()
+
     print("\nSimple Graph Example\n")
 
     print("Optimal Shortest Path")
