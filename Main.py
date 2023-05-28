@@ -53,6 +53,7 @@ def main():
     reward = [("g", 16)]
 
     tg_student_ex = TaskGraph(nodes, edges)
+    tg_student_ex._plot_graph()
 
     path, distance = tg_student_ex.traverse_optimal("s", "g")
     print("path:", path)
