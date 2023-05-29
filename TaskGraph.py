@@ -2,6 +2,8 @@ import random
 import math
 import sys
 from copy import deepcopy
+import heapq
+import numpy as np
 
 class TaskGraph:
 
@@ -206,8 +208,14 @@ class TwoStateTaskGraph:
 
         return adj_list
 
+    def _get_adj_list(self):
+        return self.adj_list
     
     def _plot_two_state_task_graph(self):
+        '''
+            This method plots the two state task graph
+        '''
+
         import networkx as nx
         import matplotlib.pyplot as plt
 
@@ -224,7 +232,6 @@ class TwoStateTaskGraph:
                 pos[node]=(d_idx,1)
                 d_idx+=0.5
 
-
         # Create a new graph
         G = nx.Graph()
 
@@ -237,3 +244,107 @@ class TwoStateTaskGraph:
         nx.draw(G, pos, with_labels=True)  # draw nodes
         nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'))  # draw edge labels
         plt.show()  
+
+    
+
+    def dijkstra(self, start, goal):
+        '''
+            Gets the shortest distance from the start node to the end node
+            This method uses djsktra's algorithm on adjacency list
+        '''
+        graph = self.adj_list
+        # Initialize the distance dictionary with infinite distances for all nodes
+        distances = {node: float('inf') for node in graph}
+        distances[start] = 0  # The start node is at distance 0
+
+        # Initialize the priority queue with the start node
+        queue = [(0, start)]
+
+        while queue:
+            # Get the node with the smallest distance from the queue
+            current_distance, current_node = heapq.heappop(queue)
+
+            # If this path is worse than the best known one, ignore it
+            if current_distance > distances[current_node]:
+                continue
+
+            # Update distances for all neighbors
+            for neighbor, weight in graph[current_node]:
+                distance = current_distance + weight
+
+                # If we found a shorter path to the neighbor, update it
+                if distance < distances[neighbor]:
+                    distances[neighbor] = distance
+                    # Add the neighbor to the queue with the new distance
+                    heapq.heappush(queue, (distance, neighbor))
+
+        return distances[goal]
+
+
+    def _traverse_with_constant_bias(self, goal_vertex='D6', bias_factor=0):
+        '''
+           Traverses through the task graph represented by self.adj_list
+           goal_vertex is the final vertex of the graph
+           bias_factor is a constant factor that inflates the present bias
+        '''
+        vertex = 'S'
+        total_cost = 0
+        traverse_path = ['S']
+        while(vertex!=goal_vertex):
+            cost = []
+            for next_vertex in self.adj_list[vertex]:
+                if next_vertex[0][0]=='D':
+                    next_vertex_cost = next_vertex[1]*bias_factor
+                else:
+                    next_vertex_cost = next_vertex[1]
+                
+                next_vertex_to_goal = self.dijkstra(next_vertex[0], goal_vertex)
+                cost.append(next_vertex_cost + next_vertex_to_goal)
+            
+            optim_cost_idx = np.argmin(cost)
+
+            optimal_next_vertex = self.adj_list[vertex][optim_cost_idx]
+            traverse_path.append(optimal_next_vertex[0])
+            vertex = optimal_next_vertex[0]
+            total_cost += optimal_next_vertex[1]
+
+
+        return traverse_path, total_cost
+
+
+    def _traverse_with_variable_bias(self, goal_vertex='D6'):
+        '''
+           Traverses through the task graph represented by self.adj_list
+           goal_vertex is the final vertex of the graph
+           bias_factor is picked from a PDF defined by outcomes and probabilities
+        '''
+        # Let's see for the rational agent variable present bias
+        # Define the distribution from which present bias is chosen from
+        outcomes = [1, 3]
+        probabilities = [1/3, 2/3]
+
+        vertex = 'S'
+        total_cost = 0
+        traverse_path = ['S']
+        while(vertex!=goal_vertex):
+            cost = []
+            for next_vertex in self.adj_list[vertex]:
+                if next_vertex[0][0]=='D':
+                    # Get value from IID for bias factor
+                    bias_factor = np.random.choice(outcomes, p=probabilities)
+                    next_vertex_cost = next_vertex[1]*bias_factor
+                else:
+                    next_vertex_cost = next_vertex[1]
+
+                next_vertex_to_goal = self.dijkstra(next_vertex[0], goal_vertex)
+                cost.append(next_vertex_cost + next_vertex_to_goal)
+            
+            optim_cost_idx = np.argmin(cost)
+
+            optimal_next_vertex = self.adj_list[vertex][optim_cost_idx]
+            traverse_path.append(optimal_next_vertex[0])
+            vertex = optimal_next_vertex[0]
+            total_cost += optimal_next_vertex[1]
+
+
+        return traverse_path, total_cost
