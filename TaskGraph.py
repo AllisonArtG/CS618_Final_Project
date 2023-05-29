@@ -182,29 +182,35 @@ class TaskGraph:
 
 class TwoStateTaskGraph:
     def __init__(self, num_days , do_cost, procrastinate_cost ):
-        self.adj_list = self._create_two_state_task_graph(num_days, do_cost=2, procrastinate_cost=1)
+        self.n=num_days
+        self.do_cost = do_cost
+        self.procrastinate_cost = procrastinate_cost
+        self.adj_list = self._create_two_state_task_graph()
+        
+    def _get_goal_state(self):
+        return 'D' + str(self.n)
 
 
-    def _create_two_state_task_graph(self, num_days, do_cost=2, procrastinate_cost=1):
+    def _create_two_state_task_graph(self):
         '''
             This method creates a two state task graph. Two states are done and undone. Ref 2016 paper
             num_days is the total number of days the task needs to be done
             This simulates task graph of bounded and monotone distance property
         '''
-        n=num_days
+        
         adj_list = {}
         
-        for i in range(0,n):
+        for i in range(0,self.n):
             if i==0:
-                adj_list['S'] = [('D'+str(i+1),do_cost), ('P'+str(i+1),procrastinate_cost)]
+                adj_list['S'] = [('D'+str(i+1),self.do_cost), ('P'+str(i+1),self.procrastinate_cost)]
             else:
                 adj_list['D'+str(i)] = [('D'+str(i+1),0)]
-                if i+1 != n:
-                    adj_list['P'+str(i)] = [('D'+str(i+1),do_cost), ('P'+str(i+1),procrastinate_cost)]
+                if i+1 != self.n:
+                    adj_list['P'+str(i)] = [('D'+str(i+1),self.do_cost), ('P'+str(i+1),self.procrastinate_cost)]
                 else:
-                    adj_list['P'+str(i)] = [('D'+str(i+1),do_cost)]
+                    adj_list['P'+str(i)] = [('D'+str(i+1),self.do_cost)]
 
-        adj_list['D'+str(n)] = []
+        adj_list['D'+str(self.n)] = []
 
         return adj_list
 
@@ -243,6 +249,7 @@ class TwoStateTaskGraph:
         # Draw the graph
         nx.draw(G, pos, with_labels=True)  # draw nodes
         nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'))  # draw edge labels
+        plt.title("Task graph with days to deadline: {self.n}")
         plt.show()  
 
     
@@ -281,7 +288,7 @@ class TwoStateTaskGraph:
         return distances[goal]
 
 
-    def _traverse_with_constant_bias(self, goal_vertex='D6', bias_factor=0):
+    def _traverse_with_constant_bias(self, bias_factor=0):
         '''
            Traverses through the task graph represented by self.adj_list
            goal_vertex is the final vertex of the graph
@@ -290,6 +297,7 @@ class TwoStateTaskGraph:
         vertex = 'S'
         total_cost = 0
         traverse_path = ['S']
+        goal_vertex = 'D' + str(self.n)
         while(vertex!=goal_vertex):
             cost = []
             for next_vertex in self.adj_list[vertex]:
@@ -312,7 +320,7 @@ class TwoStateTaskGraph:
         return traverse_path, total_cost
 
 
-    def _traverse_with_variable_bias(self, goal_vertex='D6'):
+    def _traverse_with_variable_bias(self, outcomes=[1, 3], probabilities = [1/3, 2/3]):
         '''
            Traverses through the task graph represented by self.adj_list
            goal_vertex is the final vertex of the graph
@@ -320,8 +328,7 @@ class TwoStateTaskGraph:
         '''
         # Let's see for the rational agent variable present bias
         # Define the distribution from which present bias is chosen from
-        outcomes = [1, 3]
-        probabilities = [1/3, 2/3]
+        goal_vertex = 'D' + str(self.n)
 
         vertex = 'S'
         total_cost = 0
