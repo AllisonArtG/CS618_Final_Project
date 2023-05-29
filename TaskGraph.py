@@ -177,3 +177,63 @@ class TaskGraph:
         plt.tight_layout()
         plt.show()
         
+
+class TwoStateTaskGraph:
+    def __init__(self, num_days , do_cost, procrastinate_cost ):
+        self.adj_list = self._create_two_state_task_graph(num_days, do_cost=2, procrastinate_cost=1)
+
+
+    def _create_two_state_task_graph(self, num_days, do_cost=2, procrastinate_cost=1):
+        '''
+            This method creates a two state task graph. Two states are done and undone. Ref 2016 paper
+            num_days is the total number of days the task needs to be done
+            This simulates task graph of bounded and monotone distance property
+        '''
+        n=num_days
+        adj_list = {}
+        
+        for i in range(0,n):
+            if i==0:
+                adj_list['S'] = [('D'+str(i+1),do_cost), ('P'+str(i+1),procrastinate_cost)]
+            else:
+                adj_list['D'+str(i)] = [('D'+str(i+1),0)]
+                if i+1 != n:
+                    adj_list['P'+str(i)] = [('D'+str(i+1),do_cost), ('P'+str(i+1),procrastinate_cost)]
+                else:
+                    adj_list['P'+str(i)] = [('D'+str(i+1),do_cost)]
+
+        adj_list['D'+str(n)] = []
+
+        return adj_list
+
+    
+    def _plot_two_state_task_graph(self):
+        import networkx as nx
+        import matplotlib.pyplot as plt
+
+        pos={}
+        p_idx = 0.5
+        d_idx = 0.5
+        for node in self.adj_list:
+            if node[0] == 'S':
+                pos[node]=(0,0.5)
+            elif node[0] == 'P':
+                pos[node]=(p_idx,0)
+                p_idx+=0.5
+            else:
+                pos[node]=(d_idx,1)
+                d_idx+=0.5
+
+
+        # Create a new graph
+        G = nx.Graph()
+
+        # Add edges and weights to the graph
+        for node, neighbors in self.adj_list.items():
+            for neighbor, weight in neighbors:
+                G.add_edge(node, neighbor, weight=weight)
+
+        # Draw the graph
+        nx.draw(G, pos, with_labels=True)  # draw nodes
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=nx.get_edge_attributes(G, 'weight'))  # draw edge labels
+        plt.show()  
