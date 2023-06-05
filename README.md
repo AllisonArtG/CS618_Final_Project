@@ -5,8 +5,11 @@
 
 ## To run Main
     python3 Main.py
+    This simulates experiments performed in this project. 
+    First, it simulates the graph traversal with constant bias and end reward procrastination.
+    Secondly, it demonstrates case with task abandonment.
     
-## To run two state task program
-    python3 twoTaskProcrastinationModeling.py
+    Finally, the two state task graphs are simulated and the graphs are plotted for cost vs graph size. This includes the line plots for various bias distributions and also with extremal cases (i.e., without bias and with constant bias).
+
 
 ## User Tips
